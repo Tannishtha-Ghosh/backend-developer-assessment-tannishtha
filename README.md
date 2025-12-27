@@ -1,36 +1,178 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Backend Developer Assessment – Real-Time Collaborative Workspace
 
-## Getting Started
+1️⃣ Project Overview
+This project implements a production-grade backend service for a real-time collaborative workspace, similar to a simplified collaborative coding platform.
+Key capabilities:
+Secure authentication and authorization
+Role-based access control (RBAC)
+Project and workspace management
+Real-time collaboration events
+Asynchronous background job processing
+Cloud-ready, scalable backend architecture
+The objective is to demonstrate backend system design, correctness, and scalability, rather than UI complexity.
 
-First, run the development server:
+2️⃣ Architecture Overview
+The backend follows a modular, cloud-native architecture with clear separation of concerns.
+High-Level Architecture Diagram
 
-```bash
+Client
+  |
+  v
+API Layer (Next.js App Router – Vercel)
+  |
+  ├── Authentication & RBAC (JWT)
+  ├── Project & Workspace APIs
+  ├── Job Submission APIs
+  |
+  ├── PostgreSQL (Neon)
+  │     └── Prisma ORM
+  |
+  ├── Redis (Upstash)
+  │     ├── BullMQ Job Queue
+  │     └── Pub/Sub
+  |
+  └── Pusher
+        └── Real-time collaboration events
+
+
+Architectural Principles
+API-first design
+Stateless backend services
+Clear separation of responsibilities
+Serverless-compatible and horizontally scalable
+
+3️⃣ Setup & Run Instructions
+Prerequisites
+Node.js ≥ 18
+PostgreSQL (Neon recommended)
+Redis (Upstash recommended)
+Pusher account
+
+Environment Configuration
+Create a .env file using .env.example.
+DATABASE_URL=postgresql://<neon-db-url>
+JWT_SECRET=your_jwt_secret
+REDIS_URL=rediss://<upstash-redis-url>
+PUSHER_APP_ID=xxxx
+PUSHER_KEY=xxxx
+PUSHER_SECRET=xxxx
+PUSHER_CLUSTER=ap2
+
+
+Run Locally
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Backend runs at:
+http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Docker (Optional)
+docker-compose up --build
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+4️⃣ Design Decisions & Trade-offs
+Role Management
+Roles are scoped per project using a ProjectMember join table.
+This avoids rigid global roles and supports realistic collaboration patterns.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Real-Time Communication
+Pusher is used instead of self-hosted WebSockets to ensure serverless compatibility and avoid socket scaling complexity.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Background Job Processing
+BullMQ + Redis is used for async jobs, providing retries, idempotency, and fault tolerance.
 
-## Deploy on Vercel
+Serverless Deployment
+Backend APIs are deployed on Vercel.
+Since Vercel does not support persistent WebSocket servers, real-time logic is offloaded to managed services.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5️⃣ Scalability Considerations
+Stateless APIs allow horizontal scaling
+PostgreSQL with indexing and relational integrity
+Redis for queues, caching, and Pub/Sub
+Distributed workers supported via BullMQ
+Pusher handles real-time fan-out and concurrency
+Future Improvements
+CI/CD pipelines
+Centralized logging and metrics
+Feature flags
+Dedicated worker services
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+6️⃣ API Documentation
+Base URL
+https://backend-developer-assessment-tannis.vercel.app
+
+
+Authentication APIs
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
+
+
+Project APIs
+POST /api/projects
+POST /api/projects/{projectId}/invite
+PUT  /api/projects/{projectId}/role
+
+Authorization: Bearer <token>
+
+Job APIs
+POST /api/jobs
+GET  /api/jobs/{jobId}
+
+Authorization: Bearer <token>
+
+Real-Time Collaboration
+POST /api/realtime/collaboration
+
+Authorization: Bearer <token>
+Events are broadcast via Pusher channels scoped per project.
+
+7️⃣ Test Instructions
+Testing focuses on core backend functionality:
+Authentication & authorization
+Protected routes
+Project creation & role enforcement
+Job lifecycle management
+npm test
+
+The architecture supports extension to full unit and integration testing using Jest and Supertest.
+
+8️⃣ Deployment Instructions
+Production Deployment
+Push code to GitHub
+Import repository into Vercel
+Configure environment variables:
+DATABASE_URL
+JWT_SECRET
+REDIS_URL
+PUSHER_APP_ID
+PUSHER_KEY
+PUSHER_SECRET
+PUSHER_CLUSTER
+
+
+Deploy
+
+Live Deployment
+https://backend-developer-assessment-tannis.vercel.app
+
+Health Check
+https://backend-developer-assessment-tannis.vercel.app/api/health
+
+{ "status": "ok" }
+
+
+9️⃣ Submission Links
+GitHub Repository:
+https://github.com/Tannishtha-Ghosh/backend-developer-assessment-tannishtha
+Live Backend API:
+https://backend-developer-assessment-tannis.vercel.app
+
+🎥 Walkthrough Video
+👉 [Paste walkthrough video link here]
+
+✅ Final Note
+This project demonstrates a real-world backend system with secure authentication, role-based access control, asynchronous job processing, real-time collaboration, and cloud deployment.
+The design prioritizes scalability, correctness, and production readiness within the given time constraints.
+
