@@ -1,40 +1,45 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/middleware/auth";
+import { withAuth } from "@/lib/withAuth";
 
-export async function PUT(
-req: Request,
-{ params }: { params: { projectId: string } }
-) {
-try {
-    const user = requireAuth(req);
-    const { userId, role } = await req.json();
+type RouteContext = {
+  params: {
+    projectId: string;
+  };
+};
+
+export const PUT = withAuth(
+  async (req, { params }: RouteContext, userId: string) => {
+    const { userId: targetUserId, role } = await req.json();
 
     // Only OWNER can update roles
     const owner = await prisma.projectMember.findFirst({
-    where: {
+      where: {
         projectId: params.projectId,
-        userId: user.userId,
+        userId,
         role: "OWNER",
-    },
+      },
     });
 
     if (!owner) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Forbidden" },
+        { status: 403 }
+      );
     }
 
     await prisma.projectMember.update({
-    where: {
+      where: {
         userId_projectId: {
-        userId,
-        projectId: params.projectId,
+          userId: targetUserId,
+          projectId: params.projectId,
         },
-    },
-    data: { role },
+      },
+      data: { role },
     });
 
-    return NextResponse.json({ message: "Role updated successfully" });
-} catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
-}
+    return NextResponse.json({
+      message: "Role updated successfully",
+    });
+  }
+);
