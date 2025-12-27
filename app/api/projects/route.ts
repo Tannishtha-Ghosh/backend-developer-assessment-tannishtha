@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/withAuth";
 
 export const POST = withAuth(
-  async (req: NextRequest, userId: string) => {
-    const body = await req.json();
-    const { name } = body;
+  async (req, _context, userId: string) => {
+    const { name } = await req.json();
 
     if (!name) {
       return NextResponse.json(
@@ -17,7 +16,15 @@ export const POST = withAuth(
     const project = await prisma.project.create({
       data: {
         name,
-        ownerId: userId,
+      },
+    });
+
+    // Assign OWNER role via ProjectMember
+    await prisma.projectMember.create({
+      data: {
+        projectId: project.id,
+        userId,
+        role: "OWNER",
       },
     });
 
